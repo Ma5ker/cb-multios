@@ -190,6 +190,16 @@ esac
 
 对于动态编译的程序，运行时需要将所需的.so库(生成位置一般在根目录/include下或者程序目录下)放入/usr/lib中以便程序能够加载使用。
 
+**注意**
+
+原本的静态链接选项会进行完全的静态链接，也就是将libc库函数的代码也静态链接进去；这里对根目录下`CMakeList.txt`中的line 71 添加了`-Wl,-Bdynamic -lc`使得程序静态链接libcgc，动态链接libc，生成程序测试:
+```
+sec@funny:~/workspace/cb-multios/build/challenges/3D_Image_Toolkit$ ldd ./CROMU_00078
+	linux-gate.so.1 =>  (0xf7f8b000)
+	libc.so.6 => /lib32/libc.so.6 (0xf7dbb000)
+	/usr/lib/libc.so.1 => /lib/ld-linux.so.2 (0xf7f8d000)
+```
+
 ### 32位与64位程序
 
 需要修改的地方在根目录`CMakeList.txt`的line 56-65,将其中的-m32编译选项去掉(作者代码中的注释意思好像是不完全支持64位)，如下:
