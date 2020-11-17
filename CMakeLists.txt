@@ -68,7 +68,7 @@ else(WIN32)
     # Dynamic by default
     option(BUILD_SHARED_LIBS "" ON)
     if(BUILD_STATIC_LIBS AND LINUX)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--allow-multiple-definition")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,-Bdynamic -lc -Wl,--allow-multiple-definition")
         set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
         set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
     endif()
