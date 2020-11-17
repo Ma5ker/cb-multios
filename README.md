@@ -232,3 +232,8 @@ clang: error: clang frontend command failed with exit code 70 (use -v to see inv
   - FUN:error: initializer element is not a compile-time constant
 
 以上这些只是生成过程中表现出来的问题，还有一些程序能通过编译，但是后面可能会在运行时出现内存错误，具体没有细究。
+
+
+
+**编译后二进制文件位于binaries-dynamic-libc文件夹下**
+
