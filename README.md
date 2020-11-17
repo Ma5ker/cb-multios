@@ -172,3 +172,51 @@ We are working to make this repository easier to use for the evaluation of progr
 ## Authors
 
 Porting work was completed by Kareem El-Faramawi and Loren Maggiore, with help from Artem Dinaburg, Peter Goodman, Ryan Stortz, and Jay Little. Challenges were originally created by NARF Industries, Kaprica Security, Chris Eagle, Lunge Technology, Cromulence, West Point Military Academy, Thought Networks, and Air Force Research Labs while under contract for the DARPA Cyber Grand Challenge.
+
+## 关于编译的问题
+
+修改了根目录下`CMakeList.txt`中的如下内容(为了构建统一的程序名称)，具体的见根目录下`CMakeList.txt`的diff情况。
+
+### 静态与动态链接
+
+修改文件`build.sh`中的line 32，其中SHARED为动态链接，STATIC为静态链接
+```
+LINK=${LINK:-SHARED}
+case $LINK in
+    SHARED) CMAKE_OPTS="$CMAKE_OPTS -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF";;
+    STATIC) CMAKE_OPTS="$CMAKE_OPTS -DBUILD_SHARED_LIBS=OFF -DBUILD_STATIC_LIBS=ON";;
+esac
+```
+
+对于动态编译的程序，运行时需要将所需的.so库(生成位置一般在根目录/include下或者程序目录下)放入/usr/lib中以便程序能够加载使用。
+
+### 32位与64位程序
+
+需要修改的地方在根目录`CMakeList.txt`的line 63-65,将其中的-m32编译选项去掉(作者代码中的注释意思好像是不完全支持64位)，如下:
+
+```
+    add_compile_options(
+        -fno-builtin
+        -w
+        -g3
+    )
+
+    # Link everything 32-bit (until we have a 64-bit option)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+```
+
+生成64位程序时可能会出现如下几种错误:
+
+- 强制类型转换错误(比如pointer转为uint32_t)
+  - 目前最简单的处理方式就是跳过此程序:找到程序名称，在根目录下`./exclude/linux.txt`中添加进去程序名称
+  - 错误程序有：CML/Blubber/Messaging/FailAV
+- SSE相关的错误
+  - 似乎是浮点数相关的错误，涉及程序：PTaaS/ValveChecks/Charter
+  - 目前的方法是找到build目录(或者原目录)下对应程序文件夹中的`CMakeList.txt`,将`-mno-sse`去掉;或者跳过程序？
+```
+fatal error: error in backend: SSE register return with SSE disabled
+clang: error: clang frontend command failed with exit code 70 (use -v to see invocation)
+```
+- 其他错误
+  - FUN:error: initializer element is not a compile-time constant
