@@ -237,3 +237,27 @@ clang: error: clang frontend command failed with exit code 70 (use -v to see inv
 
 **编译后二进制文件位于binaries-dynamic-libc文件夹下**
 
+### 运行问题
+
+动态链接的程序在运行时可能会出现下面问题
+```
+sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ ./NRFIN_00072_1
+bash: ./NRFIN_00072_1: No such file or directory
+```
+问题的原因是程序的链接器不存在，可以使用file查看程序需要的链接器
+```
+sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ file NRFIN_00072_1
+NRFIN_00072_1: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /usr/lib/libc.so.1, for GNU/Linux 2.6.32, BuildID[sha1]=b8365e95cb3c8cf6411b1487da00d72fdc77690b, not stripped
+```
+可以看到程序需要的链接器是`/usr/lib/libc.so.1`，但是这个在系统中并不存在。使用ldd查看：
+```
+sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ ldd ./NRFIN_00072_1
+	linux-gate.so.1 =>  (0xf7efd000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d29000)
+	/usr/lib/libc.so.1 => /lib/ld-linux.so.2 (0xf7eff000)
+```
+发现`/usr/lib/libc.so.1`本应该指向`/lib/ld-linux.so.2`，由此导致了错误，具体的原因还不清楚。
+**解决办法**：创建一个/usr/lib/libc.so.1 => /lib/ld-linux.so.2的软链接，命令如下：
+```
+ln -s /lib/ld-linux.so.2 /usr/lib/libc.so.1
+```
