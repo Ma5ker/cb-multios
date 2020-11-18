@@ -249,6 +249,12 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,-dynamic-linke
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 ```
 
+初除此之外，由于前面链接器使用的i386，需要将其修改为x64的，也就是`CMakeList.txt`中修改line72如下：
+
+```
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,-dynamic-linker /lib64/ld-linux-x86-64.so.2 -Wl,-Bdynamic -lc -Wl,--allow-multiple-definition ")
+```
+
 生成64位程序时可能会出现如下几种错误:
 
 - 强制类型转换错误(比如pointer转为uint32_t)
