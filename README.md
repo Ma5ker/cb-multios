@@ -190,7 +190,7 @@ esac
 
 对于动态编译的程序，运行时需要将所需的.so库(生成位置一般在根目录/include下或者程序目录下)放入/usr/lib中以便程序能够加载使用。
 
-**注意**
+#### 注意
 
 原本的静态链接选项会进行完全的静态链接，也就是将libc库函数的代码也静态链接进去；这里对根目录下`CMakeList.txt`中的line 71 添加了`-Wl,-Bdynamic -lc`使得程序静态链接libcgc，动态链接libc，生成程序测试:
 ```
@@ -199,6 +199,39 @@ sec@funny:~/workspace/cb-multios/build/challenges/3D_Image_Toolkit$ ldd ./CROMU_
 	libc.so.6 => /lib32/libc.so.6 (0xf7dbb000)
 	/usr/lib/libc.so.1 => /lib/ld-linux.so.2 (0xf7f8d000)
 ```
+
+#### 链接器问题(已解决，此处只作记录)
+
+动态链接的程序在运行时可能会出现下面问题
+
+```
+sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ ./NRFIN_00072_1
+bash: ./NRFIN_00072_1: No such file or directory
+```
+
+问题的原因是程序的链接器不存在，可以使用file查看程序需要的链接器
+
+```
+sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ file NRFIN_00072_1
+NRFIN_00072_1: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /usr/lib/libc.so.1, for GNU/Linux 2.6.32, BuildID[sha1]=b8365e95cb3c8cf6411b1487da00d72fdc77690b, not stripped
+```
+
+可以看到程序需要的链接器是`/usr/lib/libc.so.1`，但是这个在系统中并不存在。使用ldd查看：
+
+```
+sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ ldd ./NRFIN_00072_1
+	linux-gate.so.1 =>  (0xf7efd000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d29000)
+	/usr/lib/libc.so.1 => /lib/ld-linux.so.2 (0xf7eff000)
+```
+
+`/usr/lib/libc.so.1`是ld默认的i386链接器路径，算是工具的一个问题，解决方法是在`CMakeList.txt`中修改line72如下：
+
+```
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,-dynamic-linker /lib/ld-linux.so.2 -Wl,-Bdynamic -lc -Wl,--allow-multiple-definition ")
+```
+
+
 
 ### 32位与64位程序
 
@@ -258,6 +291,7 @@ sec@funny:~/Desktop/cb-multios/build/challenges/A_Game_of_Chance$ ldd ./NRFIN_00
 ```
 发现`/usr/lib/libc.so.1`本应该指向`/lib/ld-linux.so.2`，由此导致了错误，具体的原因还不清楚。
 **解决办法**：创建一个/usr/lib/libc.so.1 => /lib/ld-linux.so.2的软链接，命令如下：
+
 ```
 ln -s /lib/ld-linux.so.2 /usr/lib/libc.so.1
 ```
